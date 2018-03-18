@@ -5,7 +5,7 @@ namespace Hado.Utils.ObjectPool
     {
         protected override void Awake()
         {
-            // do nothing to await warning
+            // do nothing to avoid warning
         }
     }
 }
