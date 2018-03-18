@@ -68,9 +68,9 @@ namespace Hado.Utils.ObjectPool
 
         protected override void OnClear(PoolObjectController instance)
         {
+            callback.OnClear(instance.Behaviour);
             instance.OnBeforeDestroy();
             base.OnClear(instance);
-            callback.OnClear(instance.Behaviour);
         }
 
         public IObservable<Unit> PreloadAsync()
