@@ -46,6 +46,7 @@ namespace Hado.Utils.ObjectPool
 
         public void ForceDestroy()
         {
+            OnReturn();
             OnBeforeDestroy();
             Destroy(gameObject);
         }
