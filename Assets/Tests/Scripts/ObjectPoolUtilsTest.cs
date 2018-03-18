@@ -2,53 +2,43 @@
 using System.Linq;
 using RuntimeUnitTestToolkit;
 using UniRx;
-using UniRx.Triggers;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace Hado.Utils.ObjectPool
 {
-    public class ObjectPoolUtilsTest
+    public class ObjectPoolUtilsTest : ObjectPoolTestBase
     {
-        readonly Transform hierarchyParent;
-
-        public ObjectPoolUtilsTest()
-        {
-            hierarchyParent = new GameObject("parent").transform;
-            hierarchyParent.OnDestroyAsObservable()
-                  .SelectMany(_ => hierarchyParent.GetComponentsInChildren<PoolObjectController>(true))
-                  .Subscribe(c => c.ForceDestroy());
-        }
-
-        IObjectPool<PoolManagedBehaviour> CreatePool(int id, int numberOfInstances)
+        IObjectPool<PoolManagedBehaviour> CreatePool(int numberOfInstances)
         {
             var go = new GameObject();
-            var prefab = go.AddComponent<TestBehaviour>();
+            PoolManagedBehaviour prefab = go.AddComponent<TestBehaviour>();
             var config = new ObjectPoolConfig(numberOfInstances, numberOfInstances);
-            return new DontDestroyObjectPool(id, prefab, config, hierarchyParent);
+            return base.CreatePool(prefab, config);
         }
 
         public IEnumerator AllPoolObjectCanReturnByCallingFindAllRentingPoolObjects()
         {
             var numberOfInstances = 3;
-            var pool = CreatePool(id: 1, numberOfInstances: numberOfInstances);
+            var pool = CreatePool(numberOfInstances: numberOfInstances);
             yield return pool.PreloadAsync().ToYieldInstruction();
             yield return pool.PreactivateAsync().ToYieldInstruction();
 
             pool.Count.Is(numberOfInstances);
-            pool.Rent();
+            var obj = pool.Rent();
             pool.Count.Is(numberOfInstances - 1);
 
-            var all = ObjectPoolUtils.FindAllRentingPoolObjects().Select(c => c.Behaviour);
+            var id = obj.GetComponent<PoolObjectController>().Id;
+            var all = ObjectPoolUtils.FindAllRentingPoolObjects(id);
             foreach (var o in all)
-                pool.Return(o);
+                pool.Return(o.Behaviour);
 
             pool.Count.Is(numberOfInstances);
         }
 
         public IEnumerator NestedPoolObjectCanReturnToThePool()
         {
-            var pool = CreatePool(id: 1, numberOfInstances: 1);
+            var pool = CreatePool(numberOfInstances: 1);
             yield return pool.PreloadAsync().ToYieldInstruction();
             yield return pool.PreactivateAsync().ToYieldInstruction();
 
@@ -89,18 +79,18 @@ namespace Hado.Utils.ObjectPool
             SceneManager.SetActiveScene(testScene);
 
             var go = new GameObject();  // in TestScene
-            var pool = CreatePool(id: 1, numberOfInstances: 1);
+            var pool = CreatePool(numberOfInstances: 1);
             yield return pool.PreloadAsync().ToYieldInstruction();
             yield return pool.PreactivateAsync().ToYieldInstruction();
             var testSceneObj = pool.Rent();
             testSceneObj.transform.SetParent(go.transform);
-            var dontDestroyOnLoadObj = pool.Rent();
-
-            var allObjects = ObjectPoolUtils.FindAllRentingPoolObjects()
+            var obj = pool.Rent();
+            var id = obj.GetComponent<PoolObjectController>().Id;
+            var allObjects = ObjectPoolUtils.FindAllRentingPoolObjects(id)
                                             .Select(c => c.Behaviour);
             var enumerator = allObjects.GetEnumerator();
             enumerator.MoveNext().IsTrue();
-            enumerator.Current.Is(dontDestroyOnLoadObj);
+            enumerator.Current.Is(obj);
             enumerator.MoveNext().IsTrue();
             enumerator.Current.Is(testSceneObj);
 
@@ -117,7 +107,7 @@ namespace Hado.Utils.ObjectPool
             SceneManager.SetActiveScene(testScene);
 
             var go = new GameObject();  // in TestScene
-            var pool = CreatePool(id: 1, numberOfInstances: 1);
+            var pool = CreatePool(numberOfInstances: 1);
             yield return pool.PreloadAsync().ToYieldInstruction();
             yield return pool.PreactivateAsync().ToYieldInstruction();
             var obj = pool.Rent();

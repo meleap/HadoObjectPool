@@ -2,7 +2,7 @@
 namespace Hado.Utils.ObjectPool.Callbacks
 {
     public interface IObjectPoolCallback<T>
-        where T : UnityEngine.Component
+        where T : PoolManagedBehaviour
     {
         void OnCreateInstance(T instance);
 

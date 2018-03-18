@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using Hado.Utils.ObjectPool.Callbacks;
 using UniRx;
 using UniRx.Toolkit;
@@ -6,53 +7,75 @@ using UnityEngine;
 
 namespace Hado.Utils.ObjectPool
 {
-    public class ObjectPoolImpl<T> : ObjectPool<T>, IObjectPool<T>
-        where T : UnityEngine.Component
+    public class ObjectPoolImpl : ObjectPool<PoolObjectController>, IObjectPool<PoolObjectController>
     {
         public ObjectPoolConfig Config { get; private set; }
 
-        readonly T prefab;
+        readonly int id;
+        readonly PoolManagedBehaviour prefab;
         readonly Transform hierarchyParent;
-        readonly IObjectPoolCallback<T> callback;
+        readonly IObjectPoolCallback<PoolManagedBehaviour> callback;
+        readonly bool hasParent;
+        bool isLoaded;
 
-        public ObjectPoolImpl(T prefab, ObjectPoolConfig config, Transform hierarchyParent = null, IObjectPoolCallback<T> callback = null)
+        public ObjectPoolImpl(int id, PoolManagedBehaviour prefab, ObjectPoolConfig config, Transform hierarchyParent = null, IObjectPoolCallback<PoolManagedBehaviour> callback = null)
         {
+            this.id = id;
             this.prefab = prefab;
             this.Config = config;
             this.hierarchyParent = hierarchyParent;
-            this.callback = callback ?? new NopObjectPoolCallBack<T>();
+            this.callback = callback ?? new NopObjectPoolCallBack<PoolManagedBehaviour>();
+            hasParent = hierarchyParent != null;
+
             prefab.gameObject.SetActive(false); // avoid to call OnAwake OnEnable and OnDisable when CreateInstance
+            UnityEngine.Object.DontDestroyOnLoad(hierarchyParent);
         }
 
-        protected override T CreateInstance()
+        protected override PoolObjectController CreateInstance()
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (isLoaded && Count <= 0)
+                Debug.LogWarning(string.Format("create an instance bacause the pool is empty. prefabId: {0}", id));
+#endif
             var instance = UnityEngine.Object.Instantiate(prefab, hierarchyParent);
+            var c = instance.gameObject.AddComponent<PoolObjectController>();
+            c.OnCreateInstance(id);
             callback.OnCreateInstance(instance);
-            return instance;
+            return c;
         }
 
-        protected override void OnBeforeRent(T instance)
+        protected override void OnBeforeRent(PoolObjectController instance)
         {
             base.OnBeforeRent(instance);
-            callback.OnBeforeRent(instance);
+            instance.OnRent();
+            callback.OnBeforeRent(instance.Behaviour);
         }
 
-        protected override void OnBeforeReturn(T instance)
+        protected override void OnBeforeReturn(PoolObjectController instance)
         {
+            if (instance.Id != id)
+                throw new InvalidOperationException(string.Format("Id {0} is not equal to {1}", instance.Id, id));
+
+            callback.OnBeforeReturn(instance.Behaviour);
+            instance.OnReturn();
+
             instance.gameObject.transform.SetParent(hierarchyParent);
-            callback.OnBeforeReturn(instance);
+            if (!hasParent)
+                UnityEngine.Object.DontDestroyOnLoad(instance);
+
             base.OnBeforeReturn(instance);
         }
 
-        protected override void OnClear(T instance)
+        protected override void OnClear(PoolObjectController instance)
         {
+            instance.OnBeforeDestroy();
             base.OnClear(instance);
-            callback.OnClear(instance);
+            callback.OnClear(instance.Behaviour);
         }
 
         public IObservable<Unit> PreloadAsync()
         {
-            return PreloadAsync(Config.NumberOfInstances, Config.CreateCountPerFrame);
+            return PreloadAsync(Config.NumberOfInstances, Config.CreateCountPerFrame).ForEachAsync(_ => isLoaded = true);
         }
 
         public IObservable<Unit> PreactivateAsync()
@@ -66,7 +89,7 @@ namespace Hado.Utils.ObjectPool
         IEnumerator PreactivateAsyncCoroutine()
         {
             var count = Count;
-            var array = new T[count];
+            var array = new PoolObjectController[count];
             for (var i = 0; i < count; i++)
                 array[i] = Rent();
 
@@ -77,12 +100,18 @@ namespace Hado.Utils.ObjectPool
 
         public void Shrink()
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            var shrinkNum = Config.NumberOfInstances - Count;
+            if (shrinkNum > 0)
+                Debug.Log(string.Format("ObjectPool id-{0}: Shrink {1} instances", id, shrinkNum));
+#endif
             this.Shrink(0, Config.NumberOfInstances);
         }
 
         public void Clear()
         {
             Clear(callOnBeforeRent: false);
+            isLoaded = false;
         }
     }
 }

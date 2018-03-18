@@ -33,7 +33,7 @@ namespace Hado.Utils.ObjectPool.Examples
                 createCountPerFrame: 1,
                 needPreactivation: needPreactivation
             );
-            var objectPool = new DontDestroyObjectPool(id, prefab, config);
+            var objectPool = new ObjectPoolImpl(id, prefab, config);
             ObjectPoolManager.Instance.RegisterPool(id, objectPool);
 
             yield return ObjectPoolManager.Instance.PreloadAsync().ToYieldInstruction();
@@ -67,6 +67,12 @@ namespace Hado.Utils.ObjectPool.Examples
                 return;
             var obj = queue.Dequeue();
             ObjectPoolManager.Instance.Return(obj);
+        }
+
+        private void OnDestroy()
+        {
+            ObjectPoolManager.Instance.AllReturn();
+            ObjectPoolManager.Instance.Clear();
         }
     }
 }

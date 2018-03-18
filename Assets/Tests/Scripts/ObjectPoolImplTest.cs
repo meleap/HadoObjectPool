@@ -1,22 +1,23 @@
-﻿using UnityEngine;
+﻿using System.Collections;
 using RuntimeUnitTestToolkit;
-using System.Collections;
 using UniRx;
+using UnityEngine;
 
 namespace Hado.Utils.ObjectPool
 {
-    public class ObjectPoolImplTest
+    public class ObjectPoolImplTest : ObjectPoolTestBase
     {
-        IObjectPool<Transform> CreatePool(int numberOfInstances, int createCountPerFrame)
+        IObjectPool<PoolManagedBehaviour> CreatePool(int numberOfInstances)
         {
             var go = new GameObject();
-            var config = new ObjectPoolConfig(numberOfInstances, createCountPerFrame);
-            return new ObjectPoolImpl<Transform>(go.transform, config);
+            PoolManagedBehaviour prefab = go.AddComponent<TestBehaviour>();
+            var config = new ObjectPoolConfig(numberOfInstances, Mathf.Max(numberOfInstances, 1));
+            return base.CreatePool(prefab, config);
         }
 
         public IEnumerator ClearedPoolCanReuse()
         {
-            var pool = CreatePool(numberOfInstances: 1, createCountPerFrame: 1);
+            var pool = CreatePool(numberOfInstances: 1);
             yield return pool.PreloadAsync().ToYieldInstruction();
             yield return pool.PreactivateAsync().ToYieldInstruction();
             var obj = pool.Rent();
@@ -34,7 +35,7 @@ namespace Hado.Utils.ObjectPool
 
         public void EmptyPoolCanRentObject()
         {
-            var pool = CreatePool(numberOfInstances: 0, createCountPerFrame: 1);
+            var pool = CreatePool(numberOfInstances: 0);
             pool.Count.Is(0);
             var obj = pool.Rent();
             obj.IsNotNull();
@@ -44,13 +45,13 @@ namespace Hado.Utils.ObjectPool
         public IEnumerator ObjectCountShrinksToTheNumberOfInstances()
         {
             var numberOfInstances = 3;
-            var pool = CreatePool(numberOfInstances, numberOfInstances);
+            var pool = CreatePool(numberOfInstances);
 
             yield return pool.PreloadAsync().ToYieldInstruction();
             yield return pool.PreactivateAsync().ToYieldInstruction();
 
             // create twice object
-            var array = new Transform[numberOfInstances * 2];
+            var array = new PoolManagedBehaviour[numberOfInstances * 2];
             for (int i = 0; i < numberOfInstances * 2; i++)
                 array[i] = pool.Rent();
 
@@ -60,6 +61,52 @@ namespace Hado.Utils.ObjectPool
             pool.Count.Is(numberOfInstances * 2);
             pool.Shrink();
             pool.Count.Is(numberOfInstances);
+        }
+
+        public IEnumerator RentObjectIsDontDestroyOnLoad()
+        {
+            var pool = CreatePool(numberOfInstances: 1);
+            yield return pool.PreloadAsync().ToYieldInstruction();
+            yield return pool.PreactivateAsync().ToYieldInstruction();
+            var obj = pool.Rent();
+            TestUtils.IsInTheDontDestroyOnLoad(obj.gameObject).IsTrue();
+            pool.Return(obj);
+        }
+
+        public IEnumerator RentObjectIsDontDestroyOnLoadWithoutParent()
+        {
+            var pool = CreatePool(numberOfInstances: 1);
+            yield return pool.PreloadAsync().ToYieldInstruction();
+            yield return pool.PreactivateAsync().ToYieldInstruction();
+            var obj = pool.Rent();
+            TestUtils.IsInTheDontDestroyOnLoad(obj.gameObject).IsTrue();
+            pool.Return(obj);
+        }
+
+        public IEnumerator ObjectPoolCanShrink()
+        {
+            var numberOfInstances = 1;
+            var pool = CreatePool(numberOfInstances: numberOfInstances);
+            yield return pool.PreloadAsync().ToYieldInstruction();
+            yield return pool.PreactivateAsync().ToYieldInstruction();
+
+            // create twice objects
+            var array = new PoolManagedBehaviour[numberOfInstances * 2];
+            for (var i = 0; i < array.Length; i++)
+                array[i] = pool.Rent();
+            foreach (var o in array)
+                pool.Return(o);
+
+            pool.Shrink();
+        }
+
+        public IEnumerator ObjectPoolForceDestroy()
+        {
+            var pool = CreatePool(numberOfInstances: 1);
+            yield return pool.PreloadAsync().ToYieldInstruction();
+            yield return pool.PreactivateAsync().ToYieldInstruction();
+            pool.Rent().GetComponent<PoolObjectController>().ForceDestroy();
+
         }
     }
 }

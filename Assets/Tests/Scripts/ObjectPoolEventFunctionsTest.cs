@@ -5,7 +5,7 @@ using UniRx;
 
 namespace Hado.Utils.ObjectPool
 {
-    public class ObjectPoolEventFunctionsTest
+    public class ObjectPoolEventFunctionsTest : ObjectPoolTestBase
     {
         IObjectPool<EventFunctionsReceiver> CreatePool(bool prefabEnable, int numberOfInstances, bool needPreactivation)
         {
@@ -17,7 +17,7 @@ namespace Hado.Utils.ObjectPool
                 createCountPerFrame: numberOfInstances,
                 needPreactivation: needPreactivation
             );
-            return new ObjectPoolImpl<EventFunctionsReceiver>(component, config);
+            return base.CreatePool(component, config);
         }
 
         public IEnumerator EnabledPrefabsStartEventIsNotCalledBeforeRent()
@@ -31,8 +31,8 @@ namespace Hado.Utils.ObjectPool
             receiver.IsStartCalled.IsFalse();
             receiver.OnDisableCount.Is(0);
             yield return null;
-
             receiver.IsStartCalled.IsTrue();
+            pool.Return(receiver);
         }
 
         public IEnumerator DisabledPrefabsStartEventIsNotCalledBeforeRent()
@@ -45,13 +45,9 @@ namespace Hado.Utils.ObjectPool
             receiver.OnEnableCount.Is(1);
             receiver.IsStartCalled.IsFalse();
             receiver.OnDisableCount.Is(0);
-
             yield return null;
-
             receiver.IsStartCalled.IsTrue();
-
             pool.Return(receiver);
-
             receiver.OnDisableCount.Is(1);
         }
 
@@ -65,6 +61,7 @@ namespace Hado.Utils.ObjectPool
             receiver.OnEnableCount.Is(2);   // preactivate + rent
             receiver.IsStartCalled.IsTrue();
             receiver.OnDisableCount.Is(1);  // preactivate
+            pool.Return(receiver);
         }
 
         public IEnumerator PreactivationMakesCallStartEvenIfPrefabDisable()
@@ -77,6 +74,7 @@ namespace Hado.Utils.ObjectPool
             receiver.OnEnableCount.Is(2);   // preactivate + rent
             receiver.IsStartCalled.IsTrue();
             receiver.OnDisableCount.Is(1);  // preactivate
+            pool.Return(receiver);
         }
     }
 }

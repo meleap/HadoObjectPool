@@ -1,7 +1,6 @@
-﻿using UnityEngine;
-using RuntimeUnitTestToolkit;
-using UniRx;
-using UniRx.Triggers;
+﻿using RuntimeUnitTestToolkit;
+using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace Hado.Utils.ObjectPool
 {
@@ -10,18 +9,13 @@ namespace Hado.Utils.ObjectPool
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         public static void Register()
         {
+            if (SceneManager.GetActiveScene().name != "UnitTest")
+                return;
+
             UnitTest.RegisterAllMethods<ObjectPoolConfigTest>();
             UnitTest.RegisterAllMethods<ObjectPoolImplTest>();
             UnitTest.RegisterAllMethods<ObjectPoolEventFunctionsTest>();
-            UnitTest.RegisterAllMethods<DontDestroyObjectPoolTest>();
             UnitTest.RegisterAllMethods<ObjectPoolUtilsTest>();
-
-            // avoid InvalidOperationException
-            Observable.OnceApplicationQuit().Subscribe(_ =>
-            {
-                foreach (var c in ObjectPoolUtils.FindAllRentingPoolObjects())
-                    c.OnReturn();
-            });
         }
     }
 }

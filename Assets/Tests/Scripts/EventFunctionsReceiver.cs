@@ -1,11 +1,10 @@
-﻿using UnityEngine;
-
+﻿
 namespace Hado.Utils.ObjectPool
 {
     /// <summary>
     /// see https://docs.unity3d.com/2017.3/Documentation/Manual/ExecutionOrder.html
     /// </summary>
-    public class EventFunctionsReceiver : MonoBehaviour
+    public class EventFunctionsReceiver : PoolManagedBehaviour
     {
         public bool IsAwakeCalled { get; private set; }
 
@@ -19,7 +18,7 @@ namespace Hado.Utils.ObjectPool
         /// This function is always called before any Start functions and also just after a prefab is instantiated.
         /// (If a GameObject is inactive during start up Awake is not called until it is made active.)
         /// </summary>
-        void Awake()
+        protected override void Awake()
         {
             IsAwakeCalled = true;
         }

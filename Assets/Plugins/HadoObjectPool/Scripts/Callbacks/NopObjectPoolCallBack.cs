@@ -2,7 +2,7 @@
 namespace Hado.Utils.ObjectPool.Callbacks
 {
     public class NopObjectPoolCallBack<T> : IObjectPoolCallback<T>
-        where T : UnityEngine.Component
+        where T : PoolManagedBehaviour
     {
         public void OnBeforeRent(T instance)
         {

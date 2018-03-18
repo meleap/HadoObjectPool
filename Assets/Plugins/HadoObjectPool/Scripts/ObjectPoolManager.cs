@@ -13,10 +13,10 @@ namespace Hado.Utils.ObjectPool
 
         ObjectPoolManager() { }
 
-        Dictionary<int, IObjectPool<PoolManagedBehaviour>> poolDictionary = new Dictionary<int, IObjectPool<PoolManagedBehaviour>>();
+        Dictionary<int, IObjectPool<PoolObjectController>> poolDictionary = new Dictionary<int, IObjectPool<PoolObjectController>>();
 
         // require PoolObjectController
-        public void RegisterPool(int id, DontDestroyObjectPool objectPool)
+        public void RegisterPool(int id, ObjectPoolImpl objectPool)
         {
             poolDictionary.Add(id, objectPool);
         }
@@ -71,7 +71,7 @@ namespace Hado.Utils.ObjectPool
 
         public PoolManagedBehaviour Rent(int id)
         {
-            return poolDictionary[id].Rent();
+            return poolDictionary[id].Rent().Behaviour;
         }
 
         public void Return(PoolManagedBehaviour behaviour)
@@ -82,7 +82,7 @@ namespace Hado.Utils.ObjectPool
         public void Return(PoolObjectController controller)
         {
             foreach (var c in ObjectPoolUtils.ResolveNestedPoolObjects(controller))
-                poolDictionary[c.Id].Return(c.Behaviour);
+                poolDictionary[c.Id].Return(c);
         }
 
         public void AllReturn()

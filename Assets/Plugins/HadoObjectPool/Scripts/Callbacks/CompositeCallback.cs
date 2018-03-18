@@ -4,7 +4,7 @@ using System.Linq;
 namespace Hado.Utils.ObjectPool.Callbacks
 {
     public class CompositeCallback<T> : IObjectPoolCallback<T>
-        where T : UnityEngine.Component
+        where T : PoolManagedBehaviour
     {
         readonly IObjectPoolCallback<T>[] callbacks;
 
