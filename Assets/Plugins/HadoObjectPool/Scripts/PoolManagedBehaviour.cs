@@ -20,7 +20,7 @@ namespace Hado.Utils.ObjectPool
         {
             _poolObjectController = GetComponent<PoolObjectController>();
             if (_poolObjectController == null)
-                Debug.LogWarning("PoolManagedBehaviour must be instantiated by PoolManager.");
+                Debug.LogWarning("PoolManagedBehaviour must be instantiated by ObjectPool.");
         }
 
         /// <summary>
