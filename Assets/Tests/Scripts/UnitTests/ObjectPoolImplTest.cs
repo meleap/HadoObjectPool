@@ -3,7 +3,7 @@ using RuntimeUnitTestToolkit;
 using UniRx;
 using UnityEngine;
 
-namespace Hado.Utils.ObjectPool
+namespace Hado.Utils.ObjectPool.UnitTests
 {
     public class ObjectPoolImplTest : ObjectPoolTestBase
     {

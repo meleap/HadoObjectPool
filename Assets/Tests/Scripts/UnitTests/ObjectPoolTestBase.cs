@@ -2,7 +2,7 @@
 using UniRx.Triggers;
 using UnityEngine;
 
-namespace Hado.Utils.ObjectPool
+namespace Hado.Utils.ObjectPool.UnitTests
 {
     public abstract class ObjectPoolTestBase
     {

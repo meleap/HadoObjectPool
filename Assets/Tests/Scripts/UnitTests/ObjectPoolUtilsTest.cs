@@ -5,7 +5,7 @@ using UniRx;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace Hado.Utils.ObjectPool
+namespace Hado.Utils.ObjectPool.UnitTests
 {
     public class ObjectPoolUtilsTest : ObjectPoolTestBase
     {

@@ -3,7 +3,7 @@
 using System;
 using RuntimeUnitTestToolkit;
 
-namespace Hado.Utils.ObjectPool
+namespace Hado.Utils.ObjectPool.UnitTests
 {
     public class ObjectPoolConfigTest
     {
