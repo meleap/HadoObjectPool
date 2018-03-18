@@ -101,7 +101,7 @@ namespace Hado.Utils.ObjectPool
         public void Shrink()
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            var shrinkNum = Config.NumberOfInstances - Count;
+            var shrinkNum = Count - Config.NumberOfInstances;
             if (shrinkNum > 0)
                 Debug.Log(string.Format("ObjectPool id-{0}: Shrink {1} instances", id, shrinkNum));
 #endif
