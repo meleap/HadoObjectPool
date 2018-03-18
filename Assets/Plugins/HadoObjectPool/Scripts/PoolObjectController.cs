@@ -6,13 +6,15 @@ namespace Hado.Utils.ObjectPool
 {
     [RequireComponent(typeof(PoolManagedBehaviour))]
     [DisallowMultipleComponent]
-    public class PoolObjectController : MonoBehaviour
+    public sealed class PoolObjectController : MonoBehaviour
     {
         public bool IsRenting { get; private set; }
 
         public int Id { get; private set; }
 
         public PoolManagedBehaviour Behaviour { get; private set; }
+
+        bool canDestroy = false;
 
         List<IDisposable> disposables = new List<IDisposable>();
 
@@ -32,6 +34,11 @@ namespace Hado.Utils.ObjectPool
             IsRenting = false;
         }
 
+        public void OnBeforeDestroy()
+        {
+            canDestroy = true;
+        }
+
         public void Return()
         {
             ObjectPoolManager.Instance.Return(this);
@@ -39,7 +46,7 @@ namespace Hado.Utils.ObjectPool
 
         public void ForceDestroy()
         {
-            IsRenting = false;
+            OnBeforeDestroy();
             Destroy(gameObject);
         }
 
@@ -64,8 +71,8 @@ namespace Hado.Utils.ObjectPool
 
         void OnDestroy()
         {
-            if (IsRenting)
-                throw new InvalidOperationException("Renting GameObject must not be destroyed");
+            if (!canDestroy)
+                throw new InvalidOperationException("PoolObject must not be destroyed");
         }
     }
 }

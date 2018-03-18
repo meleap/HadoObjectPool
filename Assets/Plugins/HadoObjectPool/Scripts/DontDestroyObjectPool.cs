@@ -69,6 +69,8 @@ namespace Hado.Utils.ObjectPool
 
         protected override void OnClear(PoolManagedBehaviour instance)
         {
+            var c = instance.GetComponent<PoolObjectController>();
+            c.OnBeforeDestroy();
             base.OnClear(instance);
             callback.OnClear(instance);
         }

@@ -2,23 +2,33 @@
 using RuntimeUnitTestToolkit;
 using UniRx;
 using UnityEngine;
+using UniRx.Triggers;
 
 namespace Hado.Utils.ObjectPool
 {
     public class DontDestroyObjectPoolTest
     {
-        IObjectPool<PoolManagedBehaviour> CreatePool(int id, int numberOfInstances, int createCountPerFrame, Transform parent)
+        readonly Transform hierarchyParent;
+
+        public DontDestroyObjectPoolTest()
+        {
+            hierarchyParent = new GameObject("parent").transform;
+            hierarchyParent.OnDestroyAsObservable()
+                  .SelectMany(_ => hierarchyParent.GetComponentsInChildren<PoolObjectController>(true))
+                  .Subscribe(c => c.ForceDestroy());
+        }
+
+        IObjectPool<PoolManagedBehaviour> CreatePool(int id, int numberOfInstances)
         {
             var go = new GameObject();
             var prefab = go.AddComponent<TestBehaviour>();
-            var config = new ObjectPoolConfig(numberOfInstances, createCountPerFrame);
-            return new DontDestroyObjectPool(id, prefab, config, parent);
+            var config = new ObjectPoolConfig(numberOfInstances, numberOfInstances);
+            return new DontDestroyObjectPool(id, prefab, config, hierarchyParent);
         }
 
         public IEnumerator RentObjectIsDontDestroyOnLoad()
         {
-            var parent = new GameObject();
-            var pool = CreatePool(id: 1, numberOfInstances: 1, createCountPerFrame: 1, parent: parent.transform);
+            var pool = CreatePool(id: 1, numberOfInstances: 1);
             yield return pool.PreloadAsync().ToYieldInstruction();
             yield return pool.PreactivateAsync().ToYieldInstruction();
             var obj = pool.Rent();
@@ -28,7 +38,7 @@ namespace Hado.Utils.ObjectPool
 
         public IEnumerator RentObjectIsDontDestroyOnLoadWithoutParent()
         {
-            var pool = CreatePool(id: 1, numberOfInstances: 1, createCountPerFrame: 1, parent: null);
+            var pool = CreatePool(id: 1, numberOfInstances: 1);
             yield return pool.PreloadAsync().ToYieldInstruction();
             yield return pool.PreactivateAsync().ToYieldInstruction();
             var obj = pool.Rent();
@@ -39,7 +49,7 @@ namespace Hado.Utils.ObjectPool
         public IEnumerator ObjectPoolCanShrink()
         {
             var numberOfInstances = 1;
-            var pool = CreatePool(id: 1, numberOfInstances: numberOfInstances, createCountPerFrame: 1, parent: null);
+            var pool = CreatePool(id: 1, numberOfInstances: numberOfInstances);
             yield return pool.PreloadAsync().ToYieldInstruction();
             yield return pool.PreactivateAsync().ToYieldInstruction();
 

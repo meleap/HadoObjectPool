@@ -2,6 +2,7 @@
 using System.Linq;
 using RuntimeUnitTestToolkit;
 using UniRx;
+using UniRx.Triggers;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -9,18 +10,28 @@ namespace Hado.Utils.ObjectPool
 {
     public class ObjectPoolUtilsTest
     {
-        IObjectPool<PoolManagedBehaviour> CreatePool(int id, int numberOfInstances, int createCountPerFrame, Transform parent)
+        readonly Transform hierarchyParent;
+
+        public ObjectPoolUtilsTest()
+        {
+            hierarchyParent = new GameObject("parent").transform;
+            hierarchyParent.OnDestroyAsObservable()
+                  .SelectMany(_ => hierarchyParent.GetComponentsInChildren<PoolObjectController>(true))
+                  .Subscribe(c => c.ForceDestroy());
+        }
+
+        IObjectPool<PoolManagedBehaviour> CreatePool(int id, int numberOfInstances)
         {
             var go = new GameObject();
             var prefab = go.AddComponent<TestBehaviour>();
-            var config = new ObjectPoolConfig(numberOfInstances, createCountPerFrame);
-            return new DontDestroyObjectPool(id, prefab, config, parent);
+            var config = new ObjectPoolConfig(numberOfInstances, numberOfInstances);
+            return new DontDestroyObjectPool(id, prefab, config, hierarchyParent);
         }
 
         public IEnumerator AllPoolObjectCanReturnByCallingFindAllRentingPoolObjects()
         {
             var numberOfInstances = 3;
-            var pool = CreatePool(id: 1, numberOfInstances: numberOfInstances, createCountPerFrame: numberOfInstances, parent: null);
+            var pool = CreatePool(id: 1, numberOfInstances: numberOfInstances);
             yield return pool.PreloadAsync().ToYieldInstruction();
             yield return pool.PreactivateAsync().ToYieldInstruction();
 
@@ -37,7 +48,7 @@ namespace Hado.Utils.ObjectPool
 
         public IEnumerator NestedPoolObjectCanReturnToThePool()
         {
-            var pool = CreatePool(id: 1, numberOfInstances: 1, createCountPerFrame: 1, parent: null);
+            var pool = CreatePool(id: 1, numberOfInstances: 1);
             yield return pool.PreloadAsync().ToYieldInstruction();
             yield return pool.PreactivateAsync().ToYieldInstruction();
 
@@ -78,7 +89,7 @@ namespace Hado.Utils.ObjectPool
             SceneManager.SetActiveScene(testScene);
 
             var go = new GameObject();  // in TestScene
-            var pool = CreatePool(id: 1, numberOfInstances: 1, createCountPerFrame: 1, parent: null);
+            var pool = CreatePool(id: 1, numberOfInstances: 1);
             yield return pool.PreloadAsync().ToYieldInstruction();
             yield return pool.PreactivateAsync().ToYieldInstruction();
             var testSceneObj = pool.Rent();
@@ -106,7 +117,7 @@ namespace Hado.Utils.ObjectPool
             SceneManager.SetActiveScene(testScene);
 
             var go = new GameObject();  // in TestScene
-            var pool = CreatePool(id: 1, numberOfInstances: 1, createCountPerFrame: 1, parent: null);
+            var pool = CreatePool(id: 1, numberOfInstances: 1);
             yield return pool.PreloadAsync().ToYieldInstruction();
             yield return pool.PreactivateAsync().ToYieldInstruction();
             var obj = pool.Rent();
