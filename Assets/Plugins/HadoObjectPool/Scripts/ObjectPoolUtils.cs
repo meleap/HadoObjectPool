@@ -9,8 +9,9 @@ namespace Hado.Utils.ObjectPool
         public static IEnumerable<PoolObjectController> FindAllRentingPoolObjects()
         {
             // [FindObjectsOfType] cannot find SetActive(false) Objects
-            var allPoolObjects = UnityEngine.Object.FindObjectsOfType<PoolObjectController>();
-            return allPoolObjects.Where(p => p.IsRenting);
+            return UnityEngine.Object.FindObjectsOfType<PoolObjectController>()
+                              .Where(p => p.IsRenting)
+                              .Reverse();
         }
 
         public static IEnumerable<PoolObjectController> FindAllRentingPoolObjects(int id)
@@ -22,7 +23,9 @@ namespace Hado.Utils.ObjectPool
         {
             // [GetRootGameObjects] cannot find SetActive(false) Objects
             return scene.GetRootGameObjects()
-                        .SelectMany(go => go.GetComponentsInChildren<PoolObjectController>());
+                        .SelectMany(go => go.GetComponentsInChildren<PoolObjectController>())
+                        .Where(c => c.IsRenting)
+                        .Reverse();
         }
 
         public static IEnumerable<PoolObjectController> FindAllRentingPoolObjectsInScene(Scene scene, int id)

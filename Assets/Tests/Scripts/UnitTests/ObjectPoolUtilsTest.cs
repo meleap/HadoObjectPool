@@ -90,9 +90,9 @@ namespace Hado.Utils.ObjectPool.UnitTests
                                             .Select(c => c.Behaviour);
             var enumerator = allObjects.GetEnumerator();
             enumerator.MoveNext().IsTrue();
-            enumerator.Current.Is(obj);
-            enumerator.MoveNext().IsTrue();
             enumerator.Current.Is(testSceneObj);
+            enumerator.MoveNext().IsTrue();
+            enumerator.Current.Is(obj);
 
             foreach (var o in allObjects)
                 pool.Return(o);
@@ -113,7 +113,8 @@ namespace Hado.Utils.ObjectPool.UnitTests
             var obj = pool.Rent();
             obj.transform.SetParent(go.transform);
 
-            var allObjects = ObjectPoolUtils.FindAllRentingPoolObjectsInScene(testScene)
+            var id = obj.GetComponent<PoolObjectController>().Id;
+            var allObjects = ObjectPoolUtils.FindAllRentingPoolObjectsInScene(testScene, id)
                                             .Select(c => c.Behaviour);
             var enumerator = allObjects.GetEnumerator();
             enumerator.MoveNext().IsTrue();
