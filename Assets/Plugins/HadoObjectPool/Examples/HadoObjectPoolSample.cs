@@ -69,7 +69,13 @@ namespace Hado.Utils.ObjectPool.Examples
             ObjectPoolManager.Instance.Return(obj);
         }
 
-        private void OnDestroy()
+        void OnApplicationQuit()
+        {
+            ObjectPoolManager.Instance.AllReturn();
+            ObjectPoolManager.Instance.Clear();
+        }
+
+        void OnDestroy()
         {
             ObjectPoolManager.Instance.AllReturn();
             ObjectPoolManager.Instance.Clear();
