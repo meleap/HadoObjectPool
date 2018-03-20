@@ -18,12 +18,13 @@ see `Assets/Plugins/HadoObjectPool/Examples/HadoObjectPoolSample.unity` scene.
 
 # Contribute
 
-Please commit the version if update.
-
-`Assets/Plugins/HadoObjectPool/version.txt`
-
 ## Test
 
-Open `RUntimeUnitTestToolkit/UnitTest.unity` scene and `Run All Tests`
+Open `RuntimeUnitTestToolkit/UnitTest.unity` scene and `Run All Tests`
 
 [RuntimeUnitTestToolkit](https://github.com/neuecc/RuntimeUnitTestToolkit)
+
+# LICENSE
+
+MIT
+
