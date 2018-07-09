@@ -28,7 +28,8 @@ namespace Hado.Utils.ObjectPool
             hasParent = hierarchyParent != null;
 
             prefab.gameObject.SetActive(false); // avoid to call OnAwake OnEnable and OnDisable when CreateInstance
-            UnityEngine.Object.DontDestroyOnLoad(hierarchyParent);
+            if(hierarchyParent != null)
+                UnityEngine.Object.DontDestroyOnLoad(hierarchyParent);
         }
 
         protected override PoolObjectController CreateInstance()
