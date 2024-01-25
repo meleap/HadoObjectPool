@@ -1,0 +1,10 @@
+{
+  "name": "com.meleap.unity.hado-objectpool",
+  "displayName": "HadoObjectPool",
+  "description": "HadoObjectPool",
+  "version": "1.2.0",
+  "unity": "2021.3",
+  "author": "meleap inc.",
+  "license": "MIT",
+  "dependencies": {}
+}
